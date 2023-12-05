@@ -23,10 +23,10 @@ import java.util.ArrayList;
 
 
 
-                String sql = "INSERT INTO funcionario (id_pessoa, cargo, salario) VALUES (?, ?, ?)";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);                preparacao.setLong(1, funcionario.getId());
-                preparacao.setString(2, funcionario.getCargo());
-                preparacao.setDouble(3, funcionario.getSalario());
+                String sql_1 = "INSERT INTO funcionario (cargo, salario) VALUES (?, ?)";
+                PreparedStatement preparacao_1 = ConexaoMySQL.get().prepareStatement(sql_1);
+                preparacao_1.setString(1, funcionario.getCargo());
+                preparacao_1.setDouble(2, funcionario.getSalario());
 
                 int contLinhasAfetadas = preparacao.executeUpdate();
                 ResultSet generatedKeys = preparacao.getGeneratedKeys();
