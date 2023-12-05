@@ -8,41 +8,54 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.sql.Date;
+import java.time.LocalDate;
 
-    public class FuncionarioDAO {
-        public Boolean inserir(Funcionario funcionario) {
-            try {
-                String sql = "INSERT INTO pessoa (nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?)";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
-                preparacao.setString(1, funcionario.getNomeCompleto());
-                preparacao.setDate(2, funcionario.getDataNascimento());
-                preparacao.setString(3, funcionario.getDocumento());
-                preparacao.setString(4, funcionario.getPais());
-                preparacao.setString(5, funcionario.getEstado());
-                preparacao.setString(6, funcionario.getCidade());
+public class FuncionarioDAO {
+    // ... outros métodos
 
+    public Boolean inserir(Funcionario funcionario) {
+        try {
+            // Passo 1: Obter o maior ID da tabela pessoa
+            String consultaMaxId = "SELECT MAX(id) AS max_id FROM pessoa";
+            Statement stmtMaxId = ConexaoMySQL.get().createStatement();
+            ResultSet resultadoMaxId = stmtMaxId.executeQuery(consultaMaxId);
 
-
-                String sql_1 = "INSERT INTO funcionario (cargo, salario) VALUES (?, ?)";
-                PreparedStatement preparacao_1 = ConexaoMySQL.get().prepareStatement(sql_1);
-                preparacao_1.setString(1, funcionario.getCargo());
-                preparacao_1.setDouble(2, funcionario.getSalario());
-
-                int contLinhasAfetadas = preparacao.executeUpdate();
-                ResultSet generatedKeys = preparacao.getGeneratedKeys();
-
-                if (generatedKeys.next()) {
-                    funcionario.setId(generatedKeys.getLong(1));
-                }
-
-                return contLinhasAfetadas > 0;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return false;
+            long novoIdPessoa = 1; // Valor padrão se a tabela estiver vazia
+            if (resultadoMaxId.next()) {
+                novoIdPessoa = resultadoMaxId.getLong("max_id") + 1;
             }
-        }
 
-        public ArrayList<Funcionario> selecionarTodos() {
+            // Passo 2: Inserir na tabela pessoa
+            String sqlPessoa = "INSERT INTO pessoa (id, nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement preparacaoPessoa = ConexaoMySQL.get().prepareStatement(sqlPessoa);
+            preparacaoPessoa.setLong(1, novoIdPessoa);
+            preparacaoPessoa.setString(2, funcionario.getNomeCompleto());
+           preparacaoPessoa.setDate(3, funcionario.getDataNascimento());
+            preparacaoPessoa.setString(4, funcionario.getDocumento());
+            preparacaoPessoa.setString(5, funcionario.getPais());
+            preparacaoPessoa.setString(6, funcionario.getEstado());
+            preparacaoPessoa.setString(7, funcionario.getCidade());
+
+            preparacaoPessoa.executeUpdate();
+
+            // Passo 3: Inserir na tabela funcionario
+            String sqlFuncionario = "INSERT INTO funcionario (id_pessoa, cargo, salario) VALUES (?, ?, ?)";
+            PreparedStatement preparacaoFuncionario = ConexaoMySQL.get().prepareStatement(sqlFuncionario);
+            preparacaoFuncionario.setLong(1, novoIdPessoa);
+            preparacaoFuncionario.setString(2, funcionario.getCargo());
+            preparacaoFuncionario.setDouble(3, funcionario.getSalario());
+
+            int contLinhasAfetadas = preparacaoFuncionario.executeUpdate();
+
+            return contLinhasAfetadas > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public ArrayList<Funcionario> selecionarTodos() {
             try {
                 String sql = "SELECT * FROM funcionario ORDER BY id";
                 Statement stmt = ConexaoMySQL.get().createStatement();
