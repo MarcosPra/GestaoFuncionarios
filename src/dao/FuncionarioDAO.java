@@ -1,6 +1,7 @@
 package dao;
 import dao.connection.ConexaoMySQL;
 import model.Funcionario;
+import model.Pessoa;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,9 +12,19 @@ import java.util.ArrayList;
     public class FuncionarioDAO {
         public Boolean inserir(Funcionario funcionario) {
             try {
+                String sql = "INSERT INTO pessoa (nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?)";
+                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
+                preparacao.setString(1, Pessoa.getNomeCompleto());
+                preparacao.setDate(2, Pessoa.getDataNascimento());
+                preparacao.setString(3, funcionario.getDocumento());
+                preparacao.setString(4, funcionario.getPais());
+                preparacao.setString(5, funcionario.getEstado());
+                preparacao.setString(6, funcionario.getCidade());
+
+
+
                 String sql = "INSERT INTO funcionario (id_pessoa, cargo, salario) VALUES (?, ?, ?)";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-                preparacao.setLong(1, funcionario.getId());
+                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);                preparacao.setLong(1, funcionario.getId());
                 preparacao.setString(2, funcionario.getCargo());
                 preparacao.setDouble(3, funcionario.getSalario());
 

@@ -27,6 +27,23 @@ public class Funcionario extends Pessoa {
         Double salario
     ) {
         super(nomeCompleto, dataNascimento, documento, pais, estado, cidade);
+        this.cargo = cargo;
+        this.salario = salario;
+    }
+
+    public Funcionario
+            (
+                    Long id,
+                    String nomeCompleto,
+                    LocalDate dataNascimento,
+                    String documento,
+                    String pais,
+                    String estado,
+                    String cidade,
+                    String cargo,
+                    Double salario
+            ) {
+        super(nomeCompleto, dataNascimento, documento, pais, estado, cidade);
         this.id = id;
         this.cargo = cargo;
         this.salario = salario;
