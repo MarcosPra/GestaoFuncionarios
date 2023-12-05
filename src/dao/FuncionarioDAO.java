@@ -14,8 +14,8 @@ import java.util.ArrayList;
             try {
                 String sql = "INSERT INTO pessoa (nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?)";
                 PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
-                preparacao.setString(1, Pessoa.getNomeCompleto());
-                preparacao.setDate(2, Pessoa.getDataNascimento());
+                preparacao.setString(1, funcionario.getNomeCompleto());
+                preparacao.setDate(2, funcionario.getDataNascimento());
                 preparacao.setString(3, funcionario.getDocumento());
                 preparacao.setString(4, funcionario.getPais());
                 preparacao.setString(5, funcionario.getEstado());
