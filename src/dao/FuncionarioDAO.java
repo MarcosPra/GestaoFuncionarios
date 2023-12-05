@@ -2,130 +2,147 @@ package dao;
 import dao.connection.ConexaoMySQL;
 import model.Funcionario;
 import model.Pessoa;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
+public class FuncionarioDAO {
 
-    public class FuncionarioDAO {
-        public Boolean inserir(Funcionario funcionario) {
-            try {
-                String sql = "INSERT INTO pessoa (nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?)";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
-                preparacao.setString(1, funcionario.getNomeCompleto());
-                preparacao.setDate(2, funcionario.getDataNascimento());
-                preparacao.setString(3, funcionario.getDocumento());
-                preparacao.setString(4, funcionario.getPais());
-                preparacao.setString(5, funcionario.getEstado());
-                preparacao.setString(6, funcionario.getCidade());
+    public Boolean inserir(Funcionario funcionario) {
 
 
+        try {
+            // Inserir na tabela pessoa
+            String sqlPessoa = "INSERT INTO pessoa (nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?)";
+            PreparedStatement preparacaoPessoa = ConexaoMySQL.get().prepareStatement(sqlPessoa, Statement.RETURN_GENERATED_KEYS);
+            preparacaoPessoa.setString(1, funcionario.getNomeCompleto());
+            preparacaoPessoa.setDate(2, Date.valueOf(funcionario.getDataNascimento()));
+            preparacaoPessoa.setString(3, funcionario.getDocumento());
+            preparacaoPessoa.setString(4, funcionario.getPais());
+            preparacaoPessoa.setString(5, funcionario.getEstado());
+            preparacaoPessoa.setString(6, funcionario.getCidade());
 
-                String sql = "INSERT INTO funcionario (id_pessoa, cargo, salario) VALUES (?, ?, ?)";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);                preparacao.setLong(1, funcionario.getId());
-                preparacao.setString(2, funcionario.getCargo());
-                preparacao.setDouble(3, funcionario.getSalario());
+            int contLinhasAfetadasPessoa = preparacaoPessoa.executeUpdate();
+            ResultSet generatedKeys = preparacaoPessoa.getGeneratedKeys();
+            Long idPessoa = null;
+            if (generatedKeys.next()) {
+                idPessoa = generatedKeys.getLong(1);
+            }
 
-                int contLinhasAfetadas = preparacao.executeUpdate();
-                ResultSet generatedKeys = preparacao.getGeneratedKeys();
+            if (idPessoa != null) {
+                String sqlFuncionario = "INSERT INTO funcionario (id_pessoa, cargo, salario) VALUES (?, ?, ?)";
+                PreparedStatement preparacaoFuncionario = ConexaoMySQL.get().prepareStatement(sqlFuncionario);
+                preparacaoFuncionario.setLong(1, idPessoa);
+                preparacaoFuncionario.setString(2, funcionario.getCargo());
+                preparacaoFuncionario.setDouble(3, funcionario.getSalario());
 
-                if (generatedKeys.next()) {
-                    funcionario.setId(generatedKeys.getLong(1));
-                }
+                int contLinhasAfetadasFuncionario = preparacaoFuncionario.executeUpdate();
 
-                return contLinhasAfetadas > 0;
-            } catch (SQLException e) {
-                e.printStackTrace();
+                return contLinhasAfetadasFuncionario > 0;
+            } else {
+                // Tratar o caso em que não foi possível obter o ID da pessoa
                 return false;
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
+    }
 
-        public ArrayList<Funcionario> selecionarTodos() {
-            try {
-                String sql = "SELECT * FROM funcionario ORDER BY id";
-                Statement stmt = ConexaoMySQL.get().createStatement();
-                ResultSet resultado = stmt.executeQuery(sql);
 
-                ArrayList<Funcionario> listaFuncionarios = new ArrayList<>();
-                while (resultado.next()) {
-                    Funcionario funcionario = new Funcionario(
-                            resultado.getString("nomeCompleto"),
-                            resultado.getDate("dataNascimento").toLocalDate(),
-                            resultado.getString("documento"),
-                            resultado.getString("pais"),
-                            resultado.getString("estado"),
-                            resultado.getString("cidade"),
-                            resultado.getString("cargo"),
-                            resultado.getDouble("salario")
-                    );
-                    funcionario.setId(resultado.getLong("id"));
-                    listaFuncionarios.add(funcionario);
-                }
+    public ArrayList<Funcionario> selecionarTodos() {
+        try {
+            String sql = "SELECT * FROM funcionario ORDER BY id";
+            Statement stmt = ConexaoMySQL.get().createStatement();
+            ResultSet resultado = stmt.executeQuery(sql);
 
-                return listaFuncionarios;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return null;
+            ArrayList<Funcionario> listaFuncionarios = new ArrayList<>();
+            while (resultado.next()) {
+                Funcionario funcionario = new Funcionario(
+                        resultado.getString("nomeCompleto"),
+                        resultado.getDate("dataNascimento").toLocalDate(),
+                        resultado.getString("documento"),
+                        resultado.getString("pais"),
+                        resultado.getString("estado"),
+                        resultado.getString("cidade"),
+                        resultado.getString("cargo"),
+                        resultado.getDouble("salario")
+                );
+                funcionario.setId(resultado.getLong("id"));
+                listaFuncionarios.add(funcionario);
             }
-        }
 
-        public Boolean atualizar(Funcionario funcionario) {
-            try {
-                String sql = "UPDATE funcionario SET id_pessoa = ?, cargo = ?, salario = ? WHERE id = ?";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
-                preparacao.setLong(1, funcionario.getId());
-                preparacao.setString(2, funcionario.getCargo());
-                preparacao.setDouble(3, funcionario.getSalario());
-                preparacao.setLong(4, funcionario.getId());
-
-                int contLinhasAfetadas = preparacao.executeUpdate();
-                return contLinhasAfetadas > 0;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-
-        public Boolean deletar(Long id) {
-            try {
-                String sql = "DELETE FROM funcionario WHERE id = ?";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
-                preparacao.setLong(1, id);
-
-                int contLinhasAfetadas = preparacao.executeUpdate();
-                return contLinhasAfetadas > 0;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-
-        public Funcionario selecionarPorId(Long id) {
-            try {
-                String sql = "SELECT * FROM funcionario WHERE id = ?";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
-                preparacao.setLong(1, id);
-
-                ResultSet resultado = preparacao.executeQuery();
-                if (resultado.next()) {
-                    Funcionario funcionario = new Funcionario(
-                            resultado.getString("nomeCompleto"),
-                            resultado.getDate("dataNascimento").toLocalDate(),
-                            resultado.getString("documento"),
-                            resultado.getString("pais"),
-                            resultado.getString("estado"),
-                            resultado.getString("cidade"),
-                            resultado.getString("cargo"),
-                            resultado.getDouble("salario")
-                    );
-                    funcionario.setId(resultado.getLong("id"));
-                    return funcionario;
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            return listaFuncionarios;
+        } catch (SQLException e) {
+            e.printStackTrace();
             return null;
         }
     }
+    public Boolean atualizar(Funcionario funcionario) {
+        try {
+            String sql = "UPDATE funcionario SET id_pessoa = ?, cargo = ?, salario = ? WHERE id = ?";
+            PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
+            preparacao.setLong(1, funcionario.getId());
+            preparacao.setString(2, funcionario.getCargo());
+            preparacao.setDouble(3, funcionario.getSalario());
+            preparacao.setLong(4, funcionario.getId());
+
+            int contLinhasAfetadas = preparacao.executeUpdate();
+            return contLinhasAfetadas > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Boolean deletar(Long id) {
+        try {
+            String sql = "DELETE FROM funcionario WHERE id = ?";
+            PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
+            preparacao.setLong(1, id);
+
+            int contLinhasAfetadas = preparacao.executeUpdate();
+            return contLinhasAfetadas > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Boolean deltd() {
+        try {
+            String sql = "DELETE FROM gestao_hoteleira.funcionario";
+            PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
+            int contLinhasAfetadas = preparacao.executeUpdate();
+            return contLinhasAfetadas > 0;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Funcionario selecionarPorId(Long id) {
+        try {
+            String sql = "SELECT * FROM funcionario WHERE id = ?";
+            PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
+            preparacao.setLong(1, id);
+
+            ResultSet resultado = preparacao.executeQuery();
+            if (resultado.next()) {
+                Funcionario funcionario = new Funcionario(
+                        resultado.getString("nomeCompleto"),
+                        resultado.getDate("dataNascimento").toLocalDate(),
+                        resultado.getString("documento"),
+                        resultado.getString("pais"),
+                        resultado.getString("estado"),
+                        resultado.getString("cidade"),
+                        resultado.getString("cargo"),
+                        resultado.getDouble("salario")
+                );
+                funcionario.setId(resultado.getLong("id"));
+                return funcionario;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}

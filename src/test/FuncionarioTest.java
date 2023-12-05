@@ -7,7 +7,6 @@ import java.time.LocalDate;
 public class FuncionarioTest {
 
     public static String testeCadastro(
-            Double id,
             String nomeCompleto,
             LocalDate dataNascimento,
             String documento,
@@ -21,6 +20,7 @@ public class FuncionarioTest {
     {
         FuncionarioController funcionarioController = new FuncionarioController();
         String resposta = funcionarioController.cadastrar(
+
                 nomeCompleto,
                 dataNascimento,
                 documento,
