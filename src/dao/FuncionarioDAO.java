@@ -11,36 +11,44 @@ import java.util.ArrayList;
 
     public class FuncionarioDAO {
         public Boolean inserir(Funcionario funcionario) {
-            try {
-                String sql = "INSERT INTO pessoa (nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?)";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);
-                preparacao.setString(1, funcionario.getNomeCompleto());
-                preparacao.setDate(2, funcionario.getDataNascimento());
-                preparacao.setString(3, funcionario.getDocumento());
-                preparacao.setString(4, funcionario.getPais());
-                preparacao.setString(5, funcionario.getEstado());
-                preparacao.setString(6, funcionario.getCidade());
+                try {
+                    // Inserir na tabela pessoa
+                    String sqlPessoa = "INSERT INTO pessoa (nome_completo, data_nascimento, documento, pais, estado, cidade) VALUES (?, ?, ?, ?, ?, ?)";
+                    PreparedStatement preparacaoPessoa = ConexaoMySQL.get().prepareStatement(sqlPessoa, Statement.RETURN_GENERATED_KEYS);
+                    preparacaoPessoa.setString(1, funcionario.getNomeCompleto());
+                    preparacaoPessoa.setDate(2, java.sql.Date.valueOf(funcionario.getDataNascimento()));
+                    preparacaoPessoa.setString(3, funcionario.getDocumento());
+                    preparacaoPessoa.setString(4, funcionario.getPais());
+                    preparacaoPessoa.setString(5, funcionario.getEstado());
+                    preparacaoPessoa.setString(6, funcionario.getCidade());
 
+                    int contLinhasAfetadasPessoa = preparacaoPessoa.executeUpdate();
+                    ResultSet generatedKeys = preparacaoPessoa.getGeneratedKeys();
+                    Long idPessoa = null;
+                    if (generatedKeys.next()) {
+                        idPessoa = generatedKeys.getLong(1);
+                    }
 
+                    if (idPessoa != null) {
+                        // Inserir na tabela funcionario usando o ID da pessoa
+                        String sqlFuncionario = "INSERT INTO funcionario (id_pessoa, cargo, salario) VALUES (?, ?, ?)";
+                        PreparedStatement preparacaoFuncionario = ConexaoMySQL.get().prepareStatement(sqlFuncionario);
+                        preparacaoFuncionario.setLong(1, idPessoa);
+                        preparacaoFuncionario.setString(2, funcionario.getCargo());
+                        preparacaoFuncionario.setDouble(3, funcionario.getSalario());
 
-                String sql = "INSERT INTO funcionario (id_pessoa, cargo, salario) VALUES (?, ?, ?)";
-                PreparedStatement preparacao = ConexaoMySQL.get().prepareStatement(sql);                preparacao.setLong(1, funcionario.getId());
-                preparacao.setString(2, funcionario.getCargo());
-                preparacao.setDouble(3, funcionario.getSalario());
+                        int contLinhasAfetadasFuncionario = preparacaoFuncionario.executeUpdate();
 
-                int contLinhasAfetadas = preparacao.executeUpdate();
-                ResultSet generatedKeys = preparacao.getGeneratedKeys();
-
-                if (generatedKeys.next()) {
-                    funcionario.setId(generatedKeys.getLong(1));
+                        return contLinhasAfetadasFuncionario > 0;
+                    } else {
+                        // Tratar o caso em que não foi possível obter o ID da pessoa
+                        return false;
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return false;
                 }
-
-                return contLinhasAfetadas > 0;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return false;
             }
-        }
 
         public ArrayList<Funcionario> selecionarTodos() {
             try {
